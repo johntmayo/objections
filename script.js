@@ -1,97 +1,92 @@
 const spreadsheetId = '2PACX-1vSDYEI6je2t4FCRXiK3GSuUQdx1VU1BT3L--Bmdh2nWyBZEqguuNJ1DXEbKbVL8SqrRXdfybfCTXZ-6';
 const range = 'Sheet1!A:I';
+let currentStep = 'issues';
+let currentData = [];
 
 function fetchData() {
     fetch(`https://docs.google.com/spreadsheets/d/e/${spreadsheetId}/pub?output=csv`)
         .then(response => response.text())
         .then(data => {
-            const rows = data.split('\n').map(row => row.split(','));
-            displayIssues(rows);
+            currentData = data.split('\n').map(row => row.split(','));
+            displayNextStep('issues');
         })
         .catch(error => console.error('Error fetching data:', error));
 }
 
-function displayIssues(rows) {
-    const issuesDiv = document.getElementById('issues');
-    const uniqueIssues = [...new Set(rows.slice(1).map(row => row[0]))];
-    uniqueIssues.forEach(issue => {
-        const issueButton = document.createElement('button');
-        issueButton.classList.add('collapsible');
-        issueButton.textContent = issue;
-        issueButton.onclick = () => displaySubIssues(issue, rows);
-        issuesDiv.appendChild(issueButton);
-    });
+function displayNextStep(step, value = null) {
+    currentStep = step;
+    const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = ''; // Clear previous content
+
+    let nextStepData = [];
+    switch (step) {
+        case 'issues':
+            nextStepData = [...new Set(currentData.slice(1).map(row => row[0]))];
+            break;
+        case 'sub-issues':
+            nextStepData = [...new Set(currentData.filter(row => row[0] === value).map(row => row[1]))];
+            break;
+        case 'objections':
+            nextStepData = currentData.filter(row => row[1] === value).map(row => row[2]);
+            break;
+        case 'questions':
+            nextStepData = currentData.filter(row => row[2] === value).map(row => row[3]);
+            break;
+        case 'responses':
+            const responseRow = currentData.find(row => row[3] === value);
+            nextStepData = [
+                `Topline: ${responseRow[4]}`,
+                `Values: ${responseRow[5]}`,
+                `Actions: ${responseRow[6]}`,
+                `Contrast: ${responseRow[7]}`,
+                `Attack: ${responseRow[8]}`
+            ];
+            break;
+    }
+
+    if (step === 'responses') {
+        nextStepData.forEach(text => {
+            const responseDiv = document.createElement('div');
+            responseDiv.className = 'content';
+            responseDiv.textContent = text;
+            contentDiv.appendChild(responseDiv);
+        });
+    } else {
+        nextStepData.forEach(item => {
+            const button = document.createElement('button');
+            button.className = 'step-button';
+            button.textContent = item;
+            button.onclick = () => displayNextStep(getNextStep(step), item);
+            contentDiv.appendChild(button);
+        });
+    }
+
+    if (step !== 'issues') {
+        const homeButton = document.createElement('button');
+        homeButton.id = 'home-button';
+        homeButton.textContent = 'Home';
+        homeButton.onclick = goHome;
+        contentDiv.appendChild(homeButton);
+    }
 }
 
-function displaySubIssues(issue, rows) {
-    const subIssuesDiv = document.getElementById('sub-issues');
-    subIssuesDiv.innerHTML = '';
-    const filteredRows = rows.filter(row => row[0] === issue);
-    const uniqueSubIssues = [...new Set(filteredRows.map(row => row[1]))];
-    uniqueSubIssues.forEach(subIssue => {
-        const subIssueButton = document.createElement('button');
-        subIssueButton.classList.add('collapsible');
-        subIssueButton.textContent = subIssue;
-        subIssueButton.onclick = () => displayObjections(subIssue, filteredRows);
-        subIssuesDiv.appendChild(subIssueButton);
-    });
-}
-
-function displayObjections(subIssue, rows) {
-    const objectionsDiv = document.getElementById('objections');
-    objectionsDiv.innerHTML = '';
-    const filteredRows = rows.filter(row => row[1] === subIssue);
-    filteredRows.forEach(row => {
-        const objectionButton = document.createElement('button');
-        objectionButton.classList.add('collapsible');
-        objectionButton.textContent = row[2];
-        objectionButton.onclick = () => displayQuestion(row);
-        objectionsDiv.appendChild(objectionButton);
-    });
-}
-
-function displayQuestion(row) {
-    const questionsDiv = document.getElementById('questions');
-    questionsDiv.innerHTML = '';
-    const questionButton = document.createElement('button');
-    questionButton.classList.add('collapsible');
-    questionButton.textContent = row[3];
-    questionButton.onclick = () => displayResponse(row);
-    questionsDiv.appendChild(questionButton);
-}
-
-function displayResponse(row) {
-    const responsesDiv = document.getElementById('responses');
-    responsesDiv.innerHTML = '';
-    const responseTopline = document.createElement('div');
-    responseTopline.classList.add('content');
-    responseTopline.textContent = `Topline: ${row[4]}`;
-    const responseValues = document.createElement('div');
-    responseValues.classList.add('content');
-    responseValues.textContent = `Values: ${row[5]}`;
-    const responseActions = document.createElement('div');
-    responseActions.classList.add('content');
-    responseActions.textContent = `Actions: ${row[6]}`;
-    const responseContrast = document.createElement('div');
-    responseContrast.classList.add('content');
-    responseContrast.textContent = `Contrast: ${row[7]}`;
-    const responseAttack = document.createElement('div');
-    responseAttack.classList.add('content');
-    responseAttack.textContent = `Attack: ${row[8]}`;
-    responsesDiv.appendChild(responseTopline);
-    responsesDiv.appendChild(responseValues);
-    responsesDiv.appendChild(responseActions);
-    responsesDiv.appendChild(responseContrast);
-    responsesDiv.appendChild(responseAttack);
+function getNextStep(currentStep) {
+    switch (currentStep) {
+        case 'issues':
+            return 'sub-issues';
+        case 'sub-issues':
+            return 'objections';
+        case 'objections':
+            return 'questions';
+        case 'questions':
+            return 'responses';
+        default:
+            return 'issues';
+    }
 }
 
 function goHome() {
-    document.getElementById('issues').innerHTML = '';
-    document.getElementById('sub-issues').innerHTML = '';
-    document.getElementById('objections').innerHTML = '';
-    document.getElementById('questions').innerHTML = '';
-    document.getElementById('responses').innerHTML = '';
-    fetchData();
+    displayNextStep('issues');
 }
 
 document.addEventListener('DOMContentLoaded', fetchData);

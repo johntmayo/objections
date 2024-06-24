@@ -1,6 +1,6 @@
 /* General styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
     background-color: #FEF9EC;
     color: #003362;
     margin: 0;
@@ -8,9 +8,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     height: 100vh;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 #container {
@@ -18,59 +18,70 @@ body {
     max-width: 600px;
     padding: 20px;
     box-sizing: border-box;
+    text-align: center;
+}
+
+#content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 button {
     display: block;
-    width: 100%;
+    width: 80%;
+    max-width: 300px;
     padding: 15px;
-    margin: 10px 0;
+    margin: 10px auto;
     background-color: #1D58BA;
     color: #FFFFFF;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
-    text-align: left;
-    transition: background-color 0.3s;
+    text-align: center;
+    transition: background-color 0.3s, transform 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
     background-color: #003362;
+    transform: translateY(-2px);
 }
 
-button.collapsible::after {
-    content: '\002B'; /* Unicode for plus sign */
-    font-size: 20px;
-    float: right;
-}
-
-button.collapsible.active::after {
-    content: '\2212'; /* Unicode for minus sign */
-}
-
-.collapsible {
-    cursor: pointer;
-    text-align: left;
-    background-color: #1D58BA;
-}
-
-.content {
-    padding: 0 18px;
-    display: none;
-    overflow: hidden;
-    background-color: #DAE6FB;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    padding: 15px;
+button:active {
+    background-color: #002244;
+    transform: translateY(0);
 }
 
 button#home-button {
     background-color: #C00C15;
     color: white;
     font-weight: bold;
+    margin-top: 20px;
 }
 
 button#home-button:hover {
     background-color: #90030e;
+}
+
+button#home-button:active {
+    background-color: #70020b;
+}
+
+.content {
+    padding: 15px;
+    display: none;
+    overflow: hidden;
+    background-color: #DAE6FB;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    transition: max-height 0.3s ease-out;
+}
+
+@media (max-width: 600px) {
+    button {
+        font-size: 14px;
+    }
 }
