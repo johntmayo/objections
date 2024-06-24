@@ -16,15 +16,18 @@ function fetchData() {
 function displayNextStep(step, value = null) {
     currentStep = step;
     const contentDiv = document.getElementById('content');
+    const homeButton = document.getElementById('home-button');
     contentDiv.innerHTML = ''; // Clear previous content
 
     let nextStepData = [];
     switch (step) {
         case 'issues':
             nextStepData = [...new Set(currentData.slice(1).map(row => row[0]))];
+            homeButton.style.display = 'none'; // Hide home button on the first screen
             break;
         case 'sub-issues':
             nextStepData = [...new Set(currentData.filter(row => row[0] === value).map(row => row[1]))];
+            homeButton.style.display = 'block'; // Show home button on subsequent screens
             break;
         case 'objections':
             nextStepData = currentData.filter(row => row[1] === value).map(row => row[2]);
@@ -60,14 +63,6 @@ function displayNextStep(step, value = null) {
             contentDiv.appendChild(button);
         });
     }
-
-    if (step !== 'issues') {
-        const homeButton = document.createElement('button');
-        homeButton.id = 'home-button';
-        homeButton.textContent = 'Home';
-        homeButton.onclick = goHome;
-        contentDiv.appendChild(homeButton);
-    }
 }
 
 function getNextStep(currentStep) {
@@ -87,10 +82,6 @@ function getNextStep(currentStep) {
 
 function goHome() {
     displayNextStep('issues');
-}
-
-function refreshData() {
-    fetchData();
 }
 
 document.addEventListener('DOMContentLoaded', fetchData);
