@@ -2,21 +2,32 @@ const spreadsheetId = '2PACX-1vSDYEI6je2t4FCRXiK3GSuUQdx1VU1BT3L--Bmdh2nWyBZEqgu
 const range = 'Sheet1!A:I';
 let currentStep = 'issues';
 let currentData = [];
+let path = [];
 
 function fetchData() {
     fetch(`https://docs.google.com/spreadsheets/d/e/${spreadsheetId}/pub?output=csv`)
         .then(response => response.text())
         .then(data => {
-            currentData = data.split('\n').map(row => row.split(','));
+            currentData = parseCSV(data);
             displayNextStep('issues');
         })
         .catch(error => console.error('Error fetching data:', error));
+}
+
+function parseCSV(data) {
+    const rows = data.split('\n').filter(row => row.trim() !== '');
+    return rows.map(row => {
+        const regex = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/; // Split by comma not enclosed in quotes
+        return row.split(regex).map(cell => cell.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
+    });
 }
 
 function displayNextStep(step, value = null) {
     currentStep = step;
     const contentDiv = document.getElementById('content');
     const homeButton = document.getElementById('home-button');
+    const siteMapDiv = document.getElementById('site-map');
+    const pathList = document.getElementById('path-list');
     contentDiv.innerHTML = ''; // Clear previous content
 
     let nextStepData = [];
@@ -24,45 +35,56 @@ function displayNextStep(step, value = null) {
         case 'issues':
             nextStepData = [...new Set(currentData.slice(1).map(row => row[0]))];
             homeButton.style.display = 'none'; // Hide home button on the first screen
+            siteMapDiv.style.display = 'none'; // Hide site map on the first screen
+            path = []; // Reset path on the first screen
             break;
         case 'sub-issues':
             nextStepData = [...new Set(currentData.filter(row => row[0] === value).map(row => row[1]))];
             homeButton.style.display = 'block'; // Show home button on subsequent screens
+            siteMapDiv.style.display = 'block'; // Show site map on subsequent screens
+            path.push(value);
             break;
         case 'objections':
             nextStepData = currentData.filter(row => row[1] === value).map(row => row[2]);
+            path.push(value);
             break;
         case 'questions':
             nextStepData = currentData.filter(row => row[2] === value).map(row => row[3]);
+            path.push(value);
             break;
         case 'responses':
             const responseRow = currentData.find(row => row[3] === value);
             nextStepData = [
-                `Topline: ${responseRow[4]}`,
-                `Values: ${responseRow[5]}`,
-                `Actions: ${responseRow[6]}`,
-                `Contrast: ${responseRow[7]}`,
-                `Attack: ${responseRow[8]}`
+                { header: 'Topline Response', text: responseRow[4] },
+                { header: 'Values Response', text: responseRow[5] },
+                { header: 'Action Focused Response', text: responseRow[6] },
+                { header: 'Contrast Response', text: responseRow[7] },
+                { header: 'Attack Response', text: responseRow[8] }
             ];
+            path.push(value);
             break;
     }
 
     if (step === 'responses') {
-        nextStepData.forEach(text => {
+        nextStepData.forEach(item => {
             const responseDiv = document.createElement('div');
             responseDiv.className = 'content';
-            responseDiv.textContent = text;
+            responseDiv.innerHTML = `<h4>${item.header}</h4><p>${item.text}</p>`;
             contentDiv.appendChild(responseDiv);
         });
     } else {
-        nextStepData.forEach(item => {
-            const button = document.createElement('button');
-            button.className = 'step-button';
-            button.textContent = item;
-            button.onclick = () => displayNextStep(getNextStep(step), item);
-            contentDiv.appendChild(button);
-        });
+        const text = document.createElement('div');
+        text.className = 'content';
+        text.textContent = nextStepData[0];
+        contentDiv.appendChild(text);
+
+        const button = document.createElement('button');
+        button.textContent = 'Continue';
+        button.onclick = () => displayNextStep(getNextStep(step), nextStepData[0]);
+        contentDiv.appendChild(button);
     }
+
+    updateSiteMap();
 }
 
 function getNextStep(currentStep) {
@@ -78,6 +100,16 @@ function getNextStep(currentStep) {
         default:
             return 'issues';
     }
+}
+
+function updateSiteMap() {
+    const pathList = document.getElementById('path-list');
+    pathList.innerHTML = '';
+    path.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.textContent = item;
+        pathList.appendChild(listItem);
+    });
 }
 
 function goHome() {
