@@ -1,5 +1,4 @@
 const spreadsheetId = '2PACX-1vSDYEI6je2t4FCRXiK3GSuUQdx1VU1BT3L--Bmdh2nWyBZEqguuNJ1DXEbKbVL8SqrRXdfybfCTXZ-6';
-const range = 'Sheet1!A:I';
 let currentStep = 'issues';
 let currentData = [];
 let path = [];
@@ -27,7 +26,6 @@ function displayNextStep(step, value = null) {
     const contentDiv = document.getElementById('content');
     const homeButton = document.getElementById('home-button');
     const siteMapDiv = document.getElementById('site-map');
-    const pathList = document.getElementById('path-list');
     contentDiv.innerHTML = ''; // Clear previous content
 
     let nextStepData = [];
@@ -48,12 +46,8 @@ function displayNextStep(step, value = null) {
             nextStepData = currentData.filter(row => row[1] === value).map(row => row[2]);
             path.push(value);
             break;
-        case 'questions':
-            nextStepData = currentData.filter(row => row[2] === value).map(row => row[3]);
-            path.push(value);
-            break;
         case 'responses':
-            const responseRow = currentData.find(row => row[3] === value);
+            const responseRow = currentData.find(row => row[2] === value);
             nextStepData = [
                 { header: 'Topline Response', text: responseRow[4] },
                 { header: 'Values Response', text: responseRow[5] },
@@ -65,7 +59,22 @@ function displayNextStep(step, value = null) {
             break;
     }
 
-    if (step === 'responses') {
+    if (step === 'objections') {
+        const text = document.createElement('div');
+        text.className = 'content';
+        text.textContent = nextStepData[0];
+        contentDiv.appendChild(text);
+
+        const followUpText = document.createElement('div');
+        followUpText.className = 'content';
+        followUpText.innerHTML = '<strong>Ask follow-up questions to get more information before responding.</strong>';
+        contentDiv.appendChild(followUpText);
+
+        const button = document.createElement('button');
+        button.textContent = 'Continue';
+        button.onclick = () => displayNextStep('responses', nextStepData[0]);
+        contentDiv.appendChild(button);
+    } else if (step === 'responses') {
         nextStepData.forEach(item => {
             const responseDiv = document.createElement('div');
             responseDiv.className = 'content';
@@ -73,15 +82,13 @@ function displayNextStep(step, value = null) {
             contentDiv.appendChild(responseDiv);
         });
     } else {
-        const text = document.createElement('div');
-        text.className = 'content';
-        text.textContent = nextStepData[0];
-        contentDiv.appendChild(text);
-
-        const button = document.createElement('button');
-        button.textContent = 'Continue';
-        button.onclick = () => displayNextStep(getNextStep(step), nextStepData[0]);
-        contentDiv.appendChild(button);
+        nextStepData.forEach(item => {
+            const button = document.createElement('button');
+            button.className = 'step-button';
+            button.textContent = item;
+            button.onclick = () => displayNextStep(getNextStep(step), item);
+            contentDiv.appendChild(button);
+        });
     }
 
     updateSiteMap();
@@ -94,8 +101,6 @@ function getNextStep(currentStep) {
         case 'sub-issues':
             return 'objections';
         case 'objections':
-            return 'questions';
-        case 'questions':
             return 'responses';
         default:
             return 'issues';
