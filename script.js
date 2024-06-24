@@ -89,4 +89,8 @@ function goHome() {
     displayNextStep('issues');
 }
 
+function refreshData() {
+    fetchData();
+}
+
 document.addEventListener('DOMContentLoaded', fetchData);

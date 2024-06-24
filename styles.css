@@ -70,6 +70,21 @@ button#home-button:active {
     background-color: #70020b;
 }
 
+button#refresh-button {
+    background-color: #F4BC15;
+    color: #003362;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+button#refresh-button:hover {
+    background-color: #D1A114;
+}
+
+button#refresh-button:active {
+    background-color: #A17C0F;
+}
+
 .content {
     padding: 15px;
     display: none;
